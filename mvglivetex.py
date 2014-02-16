@@ -76,6 +76,8 @@ tex.append(r"""
 %%\setbeamercolor{palette primary}{fg=green}
 %%\setbeamercovered{transparent}
 
+\setbeamertemplate{navigation symbols}{}
+
 \begin{document}
 \sffamily
  
