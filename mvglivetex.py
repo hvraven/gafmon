@@ -6,8 +6,10 @@ import MVGLive
 
 stations = {
         'Pinakotheken': ['27', '28', '100'],
-        'Türkenstraße': ['154'],
-        'Universität': ['U3', 'U6']}
+        'Schellingstraße': ['154'],
+        'Universität': ['U3', 'U6'],
+        'Theresienstraße': ['U2', 'U8'],
+        'Odeonsplatz': ['U5']}
 
 BASEDIR = os.path.dirname(os.path.realpath(__file__))
 
@@ -28,34 +30,38 @@ for (station,lines) in stations.iteritems():
         departures[k] = l
     alldepartures[station] = departures
 
-# collapse Tram to Sendlinger Tor
-if ('28', 'Tram', 'Sendlinger Tor') in alldepartures['Pinakotheken']:
-    i = alldepartures['Pinakotheken'].get(('27', 'Tram', 'Sendlinger Tor'), [])
-    if i:
-        del alldepartures['Pinakotheken']['27', 'Tram', 'Sendlinger Tor']
-    i += alldepartures['Pinakotheken']['28', 'Tram', 'Sendlinger Tor']
-    del alldepartures['Pinakotheken']['28', 'Tram', 'Sendlinger Tor']
-    alldepartures['Pinakotheken']['', 'Tram', 'Sendlinger Tor'] = sorted(i)
-
 # rename and collapse some destinations
 shortdest = {
-        ('U6',  'U-Bahn', 'Garching-Forschungszentrum'): ('Garching-FoZe.', ''),
-        ('U6',  'U-Bahn', 'Alte Heide'):                 ('Fröttmaning', 'A'),
-        ('U6',  'U-Bahn', 'Münchner Freiheit'):          ('Fröttmaning', 'F'),
-        ('U6',  'U-Bahn', 'Hadern'):                     ('Klinikum Großhadern', 'H'),
-        ('154', 'Bus',    'Bruno-Walter-Ring'):          ('Arabellapark', 'B'),
+        ('154', 'Bus',    'Bruno-Walter-Ring'): ('154', 'Arabellapark', 'B'),
+        ('28',  'Tram',   'Sendlinger Tor'):    ('27', 'Sendlinger Tor', ''),
+        ('U2',  'U-Bahn', 'Harthof'):           ('U2', 'Feldmoching', 'H'),
+        ('U2',  'U-Bahn', 'Milbertshofen'):     ('U2', 'Feldmoching', 'M'),
+        ('U2',  'U-Bahn', 'Innsbrucker Ring'):  ('U2', 'Messestadt Ost', 'I'),
+        ('U2',  'U-Bahn', 'Kolumbusplatz'):     ('U2', 'Messestadt Ost', 'K'),
+        ('U2',  'U-Bahn', 'Sendlinger Tor'):    ('U2', 'Messestadt Ost', 'S'),
+        ('U3',  'U-Bahn', 'Sendlinger Tor'):    ('U3', 'Fürstenried West', 'S'),
+        ('U3',  'U-Bahn', 'Thalkirchen'):       ('U3', 'Fürstenried West', 'T'),
+        ('U3',  'U-Bahn', 'Olympiazentrum'):    ('U3', 'Moosach', 'O'),
+        ('U3',  'U-Bahn', 'Münchner Freiheit'): ('U3', 'Moosach', 'F'),
+        ('U6',  'U-Bahn', 'Alte Heide'):        ('U6', 'Fröttmaning', 'A'),
+        ('U6',  'U-Bahn', 'Kieferngarten'):     ('U6', 'Fröttmaning', 'K'),
+        ('U6',  'U-Bahn', 'Ditlindenstraße'):   ('U6', 'Fröttmaning', 'D'),
+        ('U6',  'U-Bahn', 'Garching-Forschungszentrum'): ('U6', 'Garching-FoZe.', ''),
+        ('U6',  'U-Bahn', 'Harras'):            ('U6', 'Klinikum Großhadern', 'h'),
+        ('U6',  'U-Bahn', 'Implerstraße'):      ('U6', 'Klinikum Großhadern', 'I'),
+        ('U6',  'U-Bahn', 'Münchner Freiheit'): ('U6', 'Fröttmaning', 'F'),
         }
 
-usedshorts = []
+usedshorts = {}
 for departures in alldepartures.itervalues():
-    for ((line,prod,olddest),(newdest,short)) in shortdest.iteritems():
-        i = departures.get((line,prod,olddest), [])
+    for ((oldline,prod,olddest),(newline,newdest,short)) in shortdest.iteritems():
+        i = departures.get((oldline,prod,olddest), [])
         if i:
-            departures[line,prod,newdest] += map(lambda (t,_):
+            departures[newline,prod,newdest] += map(lambda (t,_):
                     (t,short), i)
-            del departures[line,prod,olddest]
+            del departures[oldline,prod,olddest]
             if short:
-                usedshorts.append((short,olddest))
+                usedshorts[short] = olddest
 
 tex = []
 tex.append(r"""
@@ -68,6 +74,9 @@ tex.append(r"""
 \usepackage[T1]{fontenc}
 \usepackage{graphicx}
 \usepackage{lmodern}
+\usepackage{multirow}
+\usepackage{rotating}
+\usepackage{booktabs}
 
 \usepackage{xcolor}
 %%\pagecolor{black}
@@ -83,16 +92,14 @@ tex.append(r"""
  
 \begin{frame}
 \frametitle{%s}
+
+\begin{tabular}{l@{\ }c@{\ }p{3cm}@{\ }r}
+\rlap{Linie} & \hphantom{555} & Ziel & \hphantom{55,\,55,\,55}\llap{Abfahrten}\\
 """ % time.ctime())
 
 for station, departures in alldepartures.iteritems():
-    tex.append(r"""
-\begin{tabular}{l@{\ }c@{\ }p{3cm}@{\ }r}
-\multicolumn{4}{c}{%s} \\
-\rlap{Linie} & \hphantom{555} & Ziel & \hphantom{55,\,55,\,55}\llap{Abfahrt}\\
-\hline
-\rule{0pt}{1.1em}%%
-""" % station.decode('utf-8'))
+#    tex.append(r" \multicolumn{4}{l}{%s} \\ " % station.decode('utf-8'))
+    tex.append(r"\midrule")
 
     for (line,prod,dest),v in sorted(departures.iteritems(), 
             key=lambda ((s,_,y),x) : int(s.replace('U', ''))):
@@ -108,21 +115,20 @@ for station, departures in alldepartures.iteritems():
                         r"\rlap{\textsuperscript{\tiny{%s}}}" % sup),
                     sorted(v)[:3]))
 		))
-    tex.append(r"\end{tabular} \\")
+
+tex.append(r"\midrule")
 
 if usedshorts:
-    tex.append(u"\\tiny{Abkürzungen: ")
-    for short,dest in usedshorts:
+    tex.append(u"\\multicolumn{4}{l}{\\tiny{Abkürzungen: ")
+    for short,dest in usedshorts.iteritems():
         if short:
             tex.append(r"%s: %s " % (short , dest.decode('utf-8')))
-    tex.append("}\n")
+    tex.append("}}\n")
 
-tex.append(r"""%s\\
+tex.append(r"""\end{tabular}
 \end{frame}
 \end{document}
 """)
 
 with io.open(BASEDIR + '/mvg.tex', 'w', encoding='utf-8') as f:
    f.write('\n'.join(tex))
-
-
