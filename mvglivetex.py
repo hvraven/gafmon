@@ -1,11 +1,11 @@
 #!/usr/bin/python2
 # -*- coding: UTF-8 -*-
 from collections import defaultdict
-import MVGLive
+import MVGLive, re
 
 shortdest = {
         (u'154', u'Bus',    u'Bruno-Walter-Ring'): (u'154',u'Arabellapark', u'B'),
-        (u'28',  u'Tram',   u'Sendlinger Tou'):    (u'27', u'Sendlinger Tou', u''),
+        (u'27',  u'Tram',   u'Einsteinstraße'):    (u'27', u'Sendlinger Tor', u'E'),
         (u'U2',  u'U-Bahn', u'Harthof'):           (u'U2', u'Feldmoching', u'H'),
         (u'U2',  u'U-Bahn', u'Milbertshofen'):     (u'U2', u'Feldmoching', u'M'),
         (u'U2',  u'U-Bahn', u'Innsbrucker Ring'):  (u'U2', u'Messestadt Ost', u'I'),
@@ -24,11 +24,14 @@ shortdest = {
         (u'U6',  u'U-Bahn', u'Münchner Freiheit'): (u'U6', u'Fröttmaning', u'F'),
         }
 
+def toInt(text):
+    return int(re.sub('\D', '', text) or -1)
+
 def getTable(stations):
     alldepartures = {}
     for (station,lines) in stations.iteritems():
         departures = defaultdict(list)
-        data = MVGLive.getlivedata(station,30)
+        data = MVGLive.getlivedata(station,50)
         for departure in data:
             line = departure['linename'].decode('utf-8')
             if not line in lines:
@@ -38,6 +41,12 @@ def getTable(stations):
             l.append((int(departure['time']), r''))
             departures[k] = l
         alldepartures[station] = departures
+
+    if (u'28', u'Tram', u'Sendlinger Tor') or (u'28', u'Tram', u'Einsteinstraße') in alldepartures['Pinakotheken']:
+        shortdest[u'27', u'Tram', u'Sendlinger Tor'] = (ur'', u'Sendlinger Tor', u'')
+        shortdest[u'28', u'Tram', u'Sendlinger Tor'] = (ur'', u'Sendlinger Tor', u'')
+        shortdest[u'27', u'Tram', u'Einsteinstraße'] = (ur'', u'Sendlinger Tor', u'E')
+        shortdest[u'28', u'Tram', u'Einsteinstraße'] = (ur'', u'Sendlinger Tor', u'E')
 
     # rename and collapse some destinations
     usedshorts = {}
@@ -55,7 +64,7 @@ def getTable(stations):
 
     tex = []
     tex.append(ur"""
-    \begin{tabular}{@{\ }l@{\ }c@{\ }p{3.2cm}@{\ }r@{\ }}
+    \begin{tabular}{@{}l@{\,}c@{\ }p{3.1cm}@{}r@{}}
     \rlap{Linie} & \hphantom{555} & Ziel & \hphantom{55,\,55,\,55}\llap{Abfahrten}\\
     """)
 
@@ -63,9 +72,9 @@ def getTable(stations):
         tex.append(ur"\midrule")
 
         for (line,prod,dest),v in sorted(departures.iteritems(), 
-                key=lambda ((s,_,y),x) : int(s.replace('U', ''))):
+                key=lambda ((s,_,dest),x) : (toInt(s),dest)):
             tex.append(ur"""\includegraphics[height=.8em]{%s.pdf} & """ % prod)
-            if int(line.replace('U','')) <= 8:
+            if 0 < toInt(line) <= 8:
                 tex.append(ur"\includegraphics[height=.8em]{%s.pdf} & " % line)
             else:
                 tex.append("%s & " % line)
@@ -80,7 +89,7 @@ def getTable(stations):
     tex.append(ur"\midrule")
 
     if usedshorts:
-        tex.append(ur"\multicolumn{4}{l}{\parbox{5.5cm}{\tiny{Abkürzungen: ")
+        tex.append(ur"\multicolumn{4}{l}{\noindent\parbox{5.5cm}{\tiny{Abkürzungen: ")
         for short,dest in usedshorts.iteritems():
             if short:
                 tex.append(ur"%s: %s " % (short , dest))

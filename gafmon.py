@@ -9,45 +9,52 @@ stations = {
         'Schellingstraße': ['154'],
         'Universität': ['U3', 'U6'],
         'Theresienstraße': ['U2', 'U8'],
-        'Odeonsplatz': ['U5']}
+        'Odeonsplatz': ['U5'],
+}
 
 BASEDIR = os.path.dirname(os.path.realpath(__file__))
 
 tex = []
 tex.append(r"""
-\documentclass[ngerman]{article}
+\documentclass[ngerman,twocolumn]{article}
 \usepackage[utf8]{inputenc}
 \usepackage[T1]{fontenc}
-\usepackage[paperwidth=12.5cm,paperheight=10cm,margin=.5cm]{geometry}
+\usepackage[paperwidth=12.5cm,paperheight=10cm,margin=.25cm,top=.5cm]{geometry}
 \usepackage{graphicx}
 \usepackage{lmodern}
 \usepackage{multirow}
 \usepackage{rotating}
 \usepackage{booktabs}
 \usepackage{babel}
-
+\usepackage{textcomp}
 
 \usepackage{xcolor}
 \pagecolor{black}
 \color{white}
 \pagestyle{empty}
 
+\setlength{\columnsep}{.5cm}
+\setlength{\parindent}{0cm} 
+
 \begin{document}
 \sffamily
  
-\noindent
-\begin{minipage}{.5\linewidth}
 """)
 
 tex.append(mvglivetex.getTable(stations))
 
 tex.append(r"""
-\end{minipage}
-\quad
-\begin{minipage}{.46\linewidth}
-%s
-\vspace{1cm}
-""" % time.strftime('%x %X'))
+
+\vspace{.5cm}
+
+\rmfamily
+\begin{tabular*}{\linewidth}{cr}
+\multirow{2}{*}{\fontsize{1.2cm}{1em}\selectfont %s} & \raisebox{.2em}{\large %s}\\
+ & \raisebox{-.2em}{\large %s} \\
+\end{tabular*}
+\sffamily
+\vspace{.5cm}
+""" % (time.strftime('%H:%M'), time.strftime('%A'), time.strftime('%x')))
 
 tex.append(mensatex.getTable())
 
@@ -57,7 +64,6 @@ tex.append(r"\vspace{1em}")
 tex.append(whentex.getTex())
 
 tex.append(r"""
-\end{minipage}
 \end{document}
 """)
 

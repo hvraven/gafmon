@@ -37,6 +37,8 @@ def parse(data):
 
 def format(bucket, wrap=wrap):
     if not bucket: return
+
+    bucket = map(lambda s: re.sub(r"\(.*?\)", "", s), bucket)
     day = bucket[0]
     food = []
     beilagen = []
@@ -61,9 +63,9 @@ def format(bucket, wrap=wrap):
     tex.append(r"""
 
     \begingroup
-    \fontsize{8pt}{10pt}\selectfont
+    \fontsize{8pt}{9pt}\selectfont
 
-    \begin{tabular}{@{}l@{\ }p{4.70cm}@{}}
+    \begin{tabular*}{\linewidth}{@{}l@{\ }l@{}}
     \midrule
     """)
 
@@ -71,9 +73,10 @@ def format(bucket, wrap=wrap):
         tex.append(r" %s & %s \\"%(v,f))
 
     tex.append(r"""
-    \end{tabular}
+    \midrule
+    \end{tabular*}
 
-    \fontsize{6pt}{8pt}\selectfont
+    \fontsize{6pt}{7pt}\selectfont
     \textbf{Beilagen:} %s\\
     \textbf{Aktion:} %s
 
