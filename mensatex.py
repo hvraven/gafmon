@@ -65,7 +65,7 @@ def format(bucket, wrap=wrap):
     \begingroup
     \fontsize{8pt}{9pt}\selectfont
 
-    \begin{tabular*}{\linewidth}{@{}l@{\ }l@{}}
+    \begin{tabularx}{\linewidth}{@{}l@{\ }L@{}}
     \midrule
     """)
 
@@ -74,7 +74,7 @@ def format(bucket, wrap=wrap):
 
     tex.append(r"""
     \midrule
-    \end{tabular*}
+    \end{tabularx}
 
     \fontsize{6pt}{7pt}\selectfont
     \textbf{Beilagen:} %s\\

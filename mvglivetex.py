@@ -5,7 +5,6 @@ import MVGLive, re
 
 shortdest = {
         (u'154', u'Bus',    u'Bruno-Walter-Ring'): (u'154',u'Arabellapark', u'B'),
-        (u'27',  u'Tram',   u'Einsteinstraße'):    (u'27', u'Sendlinger Tor', u'E'),
         (u'U2',  u'U-Bahn', u'Harthof'):           (u'U2', u'Feldmoching', u'H'),
         (u'U2',  u'U-Bahn', u'Milbertshofen'):     (u'U2', u'Feldmoching', u'M'),
         (u'U2',  u'U-Bahn', u'Innsbrucker Ring'):  (u'U2', u'Messestadt Ost', u'I'),
@@ -42,11 +41,9 @@ def getTable(stations):
             departures[k] = l
         alldepartures[station] = departures
 
-    if (u'28', u'Tram', u'Sendlinger Tor') or (u'28', u'Tram', u'Einsteinstraße') in alldepartures['Pinakotheken']:
+    if (u'28', u'Tram', u'Sendlinger Tor') in alldepartures['Pinakotheken']:
         shortdest[u'27', u'Tram', u'Sendlinger Tor'] = (ur'', u'Sendlinger Tor', u'')
         shortdest[u'28', u'Tram', u'Sendlinger Tor'] = (ur'', u'Sendlinger Tor', u'')
-        shortdest[u'27', u'Tram', u'Einsteinstraße'] = (ur'', u'Sendlinger Tor', u'E')
-        shortdest[u'28', u'Tram', u'Einsteinstraße'] = (ur'', u'Sendlinger Tor', u'E')
 
     # rename and collapse some destinations
     usedshorts = {}
@@ -60,11 +57,9 @@ def getTable(stations):
                 if short:
                     usedshorts[short] = olddest
 
-
-
     tex = []
     tex.append(ur"""
-    \begin{tabular}{@{}l@{\,}c@{\ }p{3.1cm}@{}r@{}}
+    \begin{tabularx}{\linewidth}{@{}l@{\,}c@{\ }L@{\,}r@{}}
     \rlap{Linie} & \hphantom{555} & Ziel & \hphantom{55,\,55,\,55}\llap{Abfahrten}\\
     """)
 
@@ -86,15 +81,13 @@ def getTable(stations):
                         sorted(v)[:3]))
                     ))
 
-    tex.append(ur"\midrule")
+    tex.append(ur"\midrule\end{tabularx}")
 
     if usedshorts:
-        tex.append(ur"\multicolumn{4}{l}{\noindent\parbox{5.5cm}{\tiny{Abkürzungen: ")
+        tex.append(ur"\begin{tabularx}{\linewidth}{@{}L@{}}\tiny Abkürzungen: ")
         for short,dest in usedshorts.iteritems():
             if short:
-                tex.append(ur"%s: %s " % (short , dest))
-        tex.append("}}}\n")
+                tex.append(ur"%s:~%s " % (short , dest))
+        tex.append(ur"\end{tabularx}")
 
-    tex.append(ur"""\end{tabular}
-    """)
     return u'\n'.join(tex)
